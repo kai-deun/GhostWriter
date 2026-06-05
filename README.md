@@ -73,3 +73,4 @@ Ensure you have the following installed on your system:
 - **Frontend:** React, Vite, TypeScript, Vanilla CSS
 - **Backend/Desktop:** Tauri (Rust)
 - **Metadata Parsers:** `@uswriting/exiftool`, `pdf-lib`
+# GhostWriter
