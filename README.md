@@ -47,6 +47,8 @@ Ensure you have the following installed on your system:
 
 ## How to Use
 
+If you are still unsure about the project, feel free to use the samples in the `testing` folder or just see the results in the `results` folder.
+
 1. **Select a File:**
    - Launch the application.
    - You can drag and drop a file directly into the application window or click the dropzone to open your native file picker.
