@@ -89,7 +89,8 @@ export const MetadataEditor: React.FC<MetadataEditorProps> = ({ metadata, onSave
                   type="text" 
                   value={tag.tag}
                   onChange={(e) => handleTagNameChange(idx, e.target.value)}
-                  style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', fontSize: '0.85rem' }} 
+                  disabled={tag.is_read_only}
+                  style={{ background: 'transparent', border: 'none', color: tag.is_read_only ? 'var(--text-secondary)' : 'var(--text-secondary)', fontSize: '0.85rem', opacity: tag.is_read_only ? 0.6 : 1 }} 
                 />
               </div>
               <div style={{ flex: '2', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
@@ -98,16 +99,23 @@ export const MetadataEditor: React.FC<MetadataEditorProps> = ({ metadata, onSave
                   type="text" 
                   value={tag.value}
                   onChange={(e) => handleValueChange(idx, e.target.value)}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: '0', padding: '0.3rem 0.5rem', color: 'var(--text-primary)', width: '100%' }}
+                  disabled={tag.is_read_only}
+                  style={{ background: tag.is_read_only ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', borderRadius: '0', padding: '0.3rem 0.5rem', color: tag.is_read_only ? 'var(--text-secondary)' : 'var(--text-primary)', width: '100%', cursor: tag.is_read_only ? 'not-allowed' : 'text', opacity: tag.is_read_only ? 0.6 : 1 }}
                 />
               </div>
-              <button 
-                onClick={() => handleRemoveTag(idx)}
-                style={{ background: 'transparent', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', padding: '0.5rem' }}
-                title="Remove Tag"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
+              {!tag.is_read_only ? (
+                <button 
+                  onClick={() => handleRemoveTag(idx)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', padding: '0.5rem' }}
+                  title="Remove Tag"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              ) : (
+                <div style={{ padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }} title="Read-only (Core technical property)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </div>
+              )}
             </div>
           ))}
           <button onClick={handleAddTag} className="btn-secondary" style={{ alignSelf: 'flex-start', marginTop: '0.5rem' }}>

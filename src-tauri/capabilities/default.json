@@ -9,8 +9,6 @@
     "core:default",
     "opener:default",
     "dialog:default",
-    "local-metadata-editor:default",
-    "local-metadata-editor:allow-get-metadata",
-    "local-metadata-editor:allow-scrub-metadata"
+    "fs:default"
   ]
 }

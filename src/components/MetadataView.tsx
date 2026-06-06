@@ -4,6 +4,7 @@ export interface ExifTag {
   tag: string;
   description: string;
   value: string;
+  is_read_only?: boolean;
 }
 
 export interface MetadataInfo {

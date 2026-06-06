@@ -72,5 +72,60 @@ Ensure you have the following installed on your system:
 
 - **Frontend:** React, Vite, TypeScript, Vanilla CSS
 - **Backend/Desktop:** Tauri (Rust)
-- **Metadata Parsers:** `@uswriting/exiftool`, `pdf-lib`
-# GhostWriter
+- **Metadata Parsers:** `@uswriting/exiftool`, `pdf-lib`, `jszip`
+
+## Architecture & Code Separation
+
+To ensure system reliability and isolate errors, the parsing engine is separated into domain-specific modules under `src/utils/parsers/`:
+- **`imageParser.ts`**: Handles image and raw formats (JPEG/JPG, PNG, GIF, TIFF, RAW, SVG, WebP) using browser-level ExifTool.
+- **`audioParser.ts`**: Handles audio formats (MP3, WAV, FLAC, AAC, M4A). Features standalone scrubbing for tags, and native write integration.
+- **`videoParser.ts`**: Handles video formats (MP4, MOV, AVI, MKV, WebM), with warning mechanisms for format limits.
+- **`documentParser.ts`**: Handles document formats (PDF, DOC/DOCX, XLS/XLSX, PPT/PPTX, RTF). Integrates zip-based modifications for modern Office Open XML formats.
+
+---
+
+## Supported File Types & Operations
+
+Below is the complete list of supported file formats, along with their edit and scrub support statuses:
+
+### 📷 Photos & Images
+| Format | Read | Edit | Scrub | Notes / Details |
+| :--- | :---: | :---: | :---: | :--- |
+| **JPEG / JPG** | ✅ | ✅ | ✅ | Full tag modification and profile stripping via ExifTool. |
+| **PNG** | ✅ | ✅ | ✅ | Edits text chunks; strips optional chunks. |
+| **GIF** | ✅ | ✅ | ✅ | Supported via ExifTool. |
+| **TIFF** | ✅ | ✅ | ✅ | Full EXIF tag support. |
+| **RAW (RW2, etc.)** | ✅ | ✅ | ✅ | Supported raw image formats. |
+| **SVG** | ✅ | ✅ | ✅ | ExifTool metadata parsing. |
+| **WebP** | ✅ | ✅ | ✅ | Reads and modifies WebP metadata chunks. |
+
+### 🎥 Videos
+| Format | Read | Edit | Scrub | Notes / Details |
+| :--- | :---: | :---: | :---: | :--- |
+| **MP4** | ✅ | ✅ | ✅ | QuickTime/ISO metadata support. |
+| **MOV** | ✅ | ✅ | ✅ | Full support for QuickTime userdata and tags. |
+| **WebM** | ✅ | 🔒 | 🔒 | Read-only. Matroska container restrictions apply. |
+| **MKV** | ✅ | 🔒 | 🔒 | Read-only. Requires native tools like `mkvpropedit` to write. |
+| **AVI** | ✅ | 🔒 | 🔒 | Read-only. RIFF format has browser-write constraints. |
+
+### 🎵 Audio
+| Format | Read | Edit | Scrub | Notes / Details |
+| :--- | :---: | :---: | :---: | :--- |
+| **FLAC** | ✅ | ✅ | ✅ | Modifies and removes Vorbis comment tags. |
+| **M4A** | ✅ | ✅ | ✅ | Modifies and removes QuickTime/iTunes metadata atoms. |
+| **MP3** | ✅ | ✅ | ✅ | Support for ID3 tag reading, editing, and scrubbing. |
+| **AAC** | ✅ | ❌ | ❌ | Raw bitstream container lacks standard metadata support. |
+| **WAV** | ✅ | 🔒 | 🔒 | Read-only. RIFF metadata container write restrictions. |
+
+### 📄 Documents
+| Format | Read | Edit | Scrub | Notes / Details |
+| :--- | :---: | :---: | :---: | :--- |
+| **PDF** | ✅ | ✅ | ✅ | PDF Info Dictionary and XMP stream editing/stripping. |
+| **DOCX** | ✅ | ✅ | ✅ | XML zip-based editing of `docProps/core.xml`. |
+| **XLSX** | ✅ | ✅ | ✅ | XML zip-based editing of `docProps/core.xml`. |
+| **PPTX** | ✅ | ✅ | ✅ | XML zip-based editing of `docProps/core.xml`. |
+| **DOC / XLS / PPT** | ✅ | 🔒 | 🔒 | Legacy binary format. Read-only (Convert to `.docx/.xlsx/.pptx`). |
+| **RTF** | ✅ | 🔒 | 🔒 | Rich Text Format. Read-only. |
+| **TXT / CSV** | ❌ | ❌ | ❌ | Plaintext format (does not contain embedded metadata). |
+
+*Legend: ✅ Full Support | 🔒 Blocked (Read-Only Warning) | ❌ Unsupported*

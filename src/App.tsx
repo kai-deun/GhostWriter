@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
 import { Dropzone, SelectedFilePayload } from "./components/Dropzone";
 import { MetadataView, MetadataInfo, ExifTag } from "./components/MetadataView";
 import { MetadataEditor } from "./components/MetadataEditor";
 import { ActionBar } from "./components/ActionBar";
-import { isTauri } from "./utils/env";
 import { parseMetadata, writeMetadata } from "./utils/metadataParser";
 import "./styles.css";
 
@@ -25,22 +22,11 @@ function App() {
     setIsEditing(false);
 
     try {
-      if (isTauri() && payload.path) {
-        // We still fall back to Web APIs for PDF/DOCX even in Tauri if Rust backend doesn't support it natively yet
-        // but for now let's just route to Web APIs for all complex formats if File object is provided
-      }
-      
       if (payload.file) {
         const file = payload.file;
         const result = await parseMetadata(file);
         setMetadata(result);
         setWebFile(file);
-        setFilePath(null);
-      } else if (payload.path) {
-        const result: MetadataInfo = await invoke("get_metadata", { path: payload.path });
-        setMetadata(result);
-        setFilePath(payload.path);
-        setWebFile(null);
       }
     } catch (err: any) {
       setError(err.message || err || "Failed to read file metadata");
@@ -64,48 +50,27 @@ function App() {
 
     try {
       if (webFile && metadata) {
-        const objectUrl = await writeMetadata(webFile, updatedTags, scrubAll);
+        const { url: objectUrl, warnings } = await writeMetadata(webFile, updatedTags, scrubAll);
         
-        // Trigger download
-        const a = document.createElement("a");
-        a.href = objectUrl;
         const dotIndex = webFile.name.lastIndexOf(".");
         const baseName = dotIndex !== -1 ? webFile.name.slice(0, dotIndex) : webFile.name;
         const ext = dotIndex !== -1 ? webFile.name.slice(dotIndex) : "";
         const actionStr = scrubAll ? "_cleaned" : "_edited";
-        a.download = `${baseName}${actionStr}${ext}`;
-        a.click();
-        
-        setSuccess(`Metadata ${scrubAll ? 'scrubbed' : 'saved'} and downloaded successfully!`);
-        setIsEditing(false);
-      } else if (isTauri() && filePath && metadata) {
-        // Tauri native save
-        const dotIndex = metadata.file_name.lastIndexOf(".");
-        const baseName = dotIndex !== -1 ? metadata.file_name.slice(0, dotIndex) : metadata.file_name;
-        const ext = dotIndex !== -1 ? metadata.file_name.slice(dotIndex) : ".jpg";
-        const actionStr = scrubAll ? "_cleaned" : "_edited";
         const defaultPath = `${baseName}${actionStr}${ext}`;
 
-        const savePath = await save({
-          defaultPath,
-          filters: [{ name: "Files", extensions: ["jpg", "jpeg", "png", "pdf", "docx"] }],
-        });
+        // Trigger download
+        const a = document.createElement("a");
+        a.href = objectUrl;
+        a.download = defaultPath;
+        a.click();
 
-        if (!savePath) {
-          setLoading(false);
-          return;
-        }
-
-        if (scrubAll) {
-          await invoke("scrub_metadata", { path: filePath, savePath });
+        if (warnings && warnings.length > 0) {
+          setError(warnings.join("\n"));
+          setSuccess(`Metadata mostly ${scrubAll ? 'scrubbed' : 'saved'} (some custom tags ignored)`);
         } else {
-          // Note: Full Rust editing requires backend support which is beyond MVP. 
-          // Suggesting Web fallback.
-          throw new Error("Native metadata editing in Tauri is currently restricted. Please drag and drop the file directly to use Web mode.");
+          setSuccess(`Metadata ${scrubAll ? 'scrubbed' : 'saved'} and saved successfully!`);
         }
-
-        setSuccess(`Metadata ${scrubAll ? 'scrubbed' : 'saved'} and file saved successfully!`);
-        await handleFileSelected({ path: savePath });
+        setIsEditing(false);
       }
     } catch (err: any) {
       setError(err.message || err || "Failed to process metadata");
@@ -149,7 +114,7 @@ function App() {
         )}
 
         {(!filePath && !webFile) || !metadata ? (
-          <Dropzone onFileSelected={handleFileSelected} onError={setError} />
+          <Dropzone onFileSelected={handleFileSelected} />
         ) : (
           <>
             {isEditing ? (
