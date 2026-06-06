@@ -30,19 +30,11 @@ Ensure you have the following installed on your system:
    ```bash
    npm run dev
    ```
-   Or run the full desktop application using Tauri:
-   ```bash
-   npm run tauri dev
-   ```
 
 3. **Build for Production:**
    To build the web version:
    ```bash
    npm run build
-   ```
-   To build the desktop executable:
-   ```bash
-   npm run tauri build
    ```
 
 ## How to Use
